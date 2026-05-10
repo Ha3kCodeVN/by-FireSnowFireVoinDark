@@ -1,0 +1,83 @@
+-- Load thư viện từ Repo của ông
+local redzlib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ha3kCodeVN/RedzV5Gui/refs/heads/main/Game-Roblox.txt"))()
+
+_G.AutoFarm = false
+_G.M1Spam = false
+
+local Window = redzlib:MakeWindow({
+  Title = "Ha3kCodeVN Hub 🦊",
+  SubTitle = "Kitsune Edition",
+  SaveFolder = "Ha3kConfig.json"
+})
+
+local MainTab = Window:MakeTab({"Auto Farm", "home"})
+
+MainTab:AddToggle({
+  Name = "Kitsune Kill Aura",
+  Default = false,
+  Callback = function(Value)
+      _G.AutoFarm = Value
+  end
+})
+
+task.spawn(function()
+    local Players = game:GetService("Players")
+    local plr = Players.LocalPlayer
+    
+    while task.wait(0.1) do
+        if _G.AutoFarm and plr.Character then
+            local root = plr.Character:FindFirstChild("HumanoidRootPart")
+            local remote = plr.Character:FindFirstChild("Kitsune-Kitsune") and plr.Character["Kitsune-Kitsune"]:FindFirstChild("LeftClickRemote")
+            local enemies = workspace:FindFirstChild("Enemies")
+
+            if root and remote and enemies then
+                for _, npc in ipairs(enemies:GetChildren()) do
+                    local nRoot = npc:FindFirstChild("HumanoidRootPart")
+                    local hum = npc:FindFirstChildOfClass("Humanoid")
+                    
+                    if nRoot and hum and hum.Health > 0 then
+                        if (root.Position - nRoot.Position).Magnitude <= 34 then
+                            npc:SetAttribute("M1", "Aura")
+                            remote:FireServer(Vector3.new(0.1, -1, 0.1), 4, true)
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+MainTab:AddToggle({
+    Name = "M1 Spam (Kitsune)",
+    Default = false,
+    Callback = function(Value)
+        _G.M1Spam = Value
+    end
+})
+
+-- Khai báo biến ban đầu
+local Players = game:GetService("Players")
+local plr = Players.LocalPlayer
+local EnemiesNPC = workspace:WaitForChild("Enemies")
+local args = {Vector3.new(0.1, -1, 0.1), 1, true}
+
+-- Vòng lặp xử lý
+task.spawn(function()
+    while true do
+        task.wait(0.1) -- Tốc độ spam
+        
+        if _G.M1Spam then
+            local char = plr.Character
+            local remote = char and char:FindFirstChild("Kitsune-Kitsune") and char["Kitsune-Kitsune"]:FindFirstChild("LeftClickRemote")
+            
+            if remote then
+                for _, npc in ipairs(EnemiesNPC:GetChildren()) do
+                    -- Kiểm tra xem NPC có Attribute "M1" với giá trị là "Aura" không
+                    if npc:GetAttribute("M1") == "Aura" then
+                        remote:FireServer(unpack(args))
+                    end
+                end
+            end
+        end
+    end
+end)
