@@ -1,20 +1,28 @@
-local chosenTeam = "Pirates"
-if getgenv().Config["Join-to-Team"].MARINES == true then
-    chosenTeam = "Marines"
-elseif getgenv().Config["Join-to-Team"].PIRATES == true then
-    chosenTeam = "Pirates"
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local targetTeam = "Pirates"
+if getgenv().Config["Join-to-Team"].MARINES then
+    targetTeam = "Marines"
+elseif getgenv().Config["Join-to-Team"].PIRATES then
+    targetTeam = "Pirates"
 end
 
-local args = {
-    "SetTeam",
-    chosenTeam
-}
+local currentTeam = LocalPlayer.Team and LocalPlayer.Team.Name or ""
 
-local remotes = game:GetService("ReplicatedStorage"):WaitForChild("Remotes", 1)
-if remotes then
-    local commF = remotes:WaitForChild("CommF_", 1)
-    if commF then
-        commF:InvokeServer(unpack(args))
+if currentTeam == targetTeam then
+    
+elseif currentTeam ~= "" and currentTeam ~= "Neutral" then
+    local args = {
+        "SetTeam",
+        targetTeam
+    }
+    
+    local remotes = game:GetService("ReplicatedStorage"):WaitForChild("Remotes", 1)
+    if remotes then
+        local commF = remotes:WaitForChild("CommF_", 1)
+        if commF then
+            commF:InvokeServer(unpack(args))
+        end
     end
 end
-
