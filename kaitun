@@ -19,9 +19,9 @@ local args = {
     targetTeam
 }
 
-local remotes = game:GetService("ReplicatedStorage"):WaitForChild("Remotes", 5)
+local remotes = game:GetService("ReplicatedStorage"):WaitForChild("Remotes", 1)
 if remotes then
-    local commF = remotes:WaitForChild("CommF_", 5)
+    local commF = remotes:WaitForChild("CommF_", 1)
     if commF then
         commF:InvokeServer(unpack(args))
     end
