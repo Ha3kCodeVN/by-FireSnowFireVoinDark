@@ -10,19 +10,19 @@ end
 
 local currentTeam = LocalPlayer.Team and LocalPlayer.Team.Name or ""
 
-if currentTeam == targetTeam then
-    
-elseif currentTeam ~= "" and currentTeam ~= "Neutral" then
-    local args = {
-        "SetTeam",
-        targetTeam
-    }
-    
-    local remotes = game:GetService("ReplicatedStorage"):WaitForChild("Remotes", 1)
-    if remotes then
-        local commF = remotes:WaitForChild("CommF_", 1)
-        if commF then
-            commF:InvokeServer(unpack(args))
-        end
+if currentTeam == targetTeam then 
+    return 
+end
+
+local args = {
+    "SetTeam",
+    targetTeam
+}
+
+local remotes = game:GetService("ReplicatedStorage"):WaitForChild("Remotes", 5)
+if remotes then
+    local commF = remotes:WaitForChild("CommF_", 5)
+    if commF then
+        commF:InvokeServer(unpack(args))
     end
 end
