@@ -1,6 +1,8 @@
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
+local SeaW = workspace:GetAttribute("Sea")
+
 local targetTeam = "Pirates"
 if getgenv().Config["Join-to-Team"].MARINES then
     targetTeam = "Marines"
@@ -10,19 +12,20 @@ end
 
 local currentTeam = LocalPlayer.Team and LocalPlayer.Team.Name or ""
 
-if currentTeam == targetTeam then 
-    return 
+if currentTeam ~= targetTeam then 
+    local args = {
+        "SetTeam",
+        targetTeam
+    }
+    local remotes = game:GetService("ReplicatedStorage"):WaitForChild("Remotes", 1)
+    if remotes then
+        local commF = remotes:WaitForChild("CommF_", 1)
+        if commF then
+            commF:InvokeServer(unpack(args))
+        end
+    end
 end
 
-local args = {
-    "SetTeam",
-    targetTeam
-}
-
-local remotes = game:GetService("ReplicatedStorage"):WaitForChild("Remotes", 1)
-if remotes then
-    local commF = remotes:WaitForChild("CommF_", 1)
-    if commF then
-        commF:InvokeServer(unpack(args))
-    end
+if SeaW == "Sea1" or SeaW == "Sea2" or SeaW == "Sea3" then
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/Ha3kCodeVN/by-FireSnowFireVoinDark/refs/heads/main/" .. SeaW))()
 end
