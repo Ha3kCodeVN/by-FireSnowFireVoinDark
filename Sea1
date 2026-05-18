@@ -1,1 +1,87 @@
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local LocalPlayer = Players.LocalPlayer
 
+local TARGET_POSITION = Vector3.new(-4955.32080078125, 294.3970031738281, -2900.992919921875)
+local MAX_DISTANCE_Teleport_SkipLevel = 1750
+local TWEEN_SPEED = 350
+local Player_Y = 20
+local currentTween = nil 
+
+while task.wait(0.1) do
+    local Character = LocalPlayer.Character
+    local RootPart = Character and Character:FindFirstChild("HumanoidRootPart")
+    local Data = LocalPlayer:FindFirstChild("Data")
+    local LevelValue = Data and Data:FindFirstChild("Level")
+    
+    if LevelValue and RootPart then
+        local Enemies = workspace:FindFirstChild("Enemies")
+        local SkyBandit = Enemies and Enemies:FindFirstChild("Sky Bandit")
+        local EnemyRoot = SkyBandit and (SkyBandit:FindFirstChild("HumanoidRootPart") or SkyBandit.PrimaryPart)
+        local EnemyHumanoid = SkyBandit and SkyBandit:FindFirstChildOfClass("Humanoid")
+        
+        local viTriDich = TARGET_POSITION
+        
+        if EnemyRoot and EnemyHumanoid and EnemyHumanoid.Health > 0 then 
+            viTriDich = Vector3.new(EnemyRoot.Position.X, EnemyRoot.Position.Y + Player_Y, EnemyRoot.Position.Z)
+        else
+            viTriDich = Vector3.new(TARGET_POSITION.X, TARGET_POSITION.Y + Player_Y, TARGET_POSITION.Z)
+        end
+        
+        local Map = workspace:FindFirstChild("Map")
+        local SkyArea1 = Map and Map:FindFirstChild("SkyArea1")
+        local PathwayTemple = SkyArea1 and SkyArea1:FindFirstChild("PathwayTemple")
+        
+        if PathwayTemple then
+            local TeleportPart = PathwayTemple:FindFirstChild("ExitPoint") or PathwayTemple:FindFirstChild("Entrance")
+            
+            if TeleportPart and TeleportPart:IsA("BasePart") then
+                local distanceToExit = (RootPart.Position - TeleportPart.Position).Magnitude
+                
+                if distanceToExit > MAX_DISTANCE_Teleport_SkipLevel then
+                    
+                    if not currentTween or currentTween.PlaybackState == Enum.PlaybackState.Completed or currentTween.PlaybackState == Enum.PlaybackState.Cancelled then
+                        
+                        task.spawn(function()
+                            RootPart.CFrame = TeleportPart.CFrame
+                            task.wait(0.25)
+                            
+                            local EntrancePart = PathwayTemple:FindFirstChild("Entrance")
+                            if EntrancePart then
+                                EntrancePart.Parent = nil
+                                EntrancePart:Destroy()
+                            end
+                            
+                            local distanceToTarget = (RootPart.Position - viTriDich).Magnitude
+                            local duration = distanceToTarget / TWEEN_SPEED
+                            local tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+                            
+                            currentTween = TweenService:Create(RootPart, tweenInfo, {CFrame = CFrame.new(viTriDich)})
+                            currentTween:Play()
+                            currentTween.Completed:Wait() 
+                            
+                            RootPart.CFrame = CFrame.new(viTriDich)
+                        end)
+                    end
+                    
+                else
+                    local distanceToTarget = (RootPart.Position - viTriDich).Magnitude
+                    if distanceToTarget > 5 then
+                        if not currentTween or currentTween.PlaybackState == Enum.PlaybackState.Completed or currentTween.PlaybackState == Enum.PlaybackState.Cancelled then
+                            task.spawn(function()
+                                local duration = distanceToTarget / TWEEN_SPEED
+                                local tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+                                
+                                currentTween = TweenService:Create(RootPart, tweenInfo, {CFrame = CFrame.new(viTriDich)})
+                                currentTween:Play()
+                                currentTween.Completed:Wait()
+                                
+                                RootPart.CFrame = CFrame.new(viTriDich)
+                            end)
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
