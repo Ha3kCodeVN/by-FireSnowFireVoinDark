@@ -1,3 +1,4 @@
+local Workspace = game:GetService("Workspace")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
@@ -28,4 +29,31 @@ end
 
 if SeaW == "Sea1" or SeaW == "Sea2" or SeaW == "Sea3" then
     loadstring(game:HttpGet("https://raw.githubusercontent.com/Ha3kCodeVN/by-FireSnowFireVoinDark/refs/heads/main/" .. SeaW))()
+end
+
+while true do
+    task.wait(0.1)
+    
+    local UrseNameW = LocalPlayer and LocalPlayer.Name or "UrseName"
+    
+    local charactersW = Workspace:FindFirstChild("Characters")
+    if charactersW then
+        local character = charactersFolder:FindFirstChild(UrseNameW)
+        if character then
+            local hrp = character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                local bodyVelocity = hrp:FindFirstChild("BodyCilp")
+                
+                if not bodyVelocity then
+                    bodyVelocity = Instance.new("BodyVelocity")
+                    bodyVelocity.Name = "BodyCilp"
+                    bodyVelocity.MaxForce = Vector3.new(10000, 10000, 10000)
+                    bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+                    bodyVelocity.Parent = hrp
+                else
+                    bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+                end
+            end
+        end
+    end
 end
