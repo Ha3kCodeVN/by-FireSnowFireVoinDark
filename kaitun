@@ -2,8 +2,20 @@ local Workspace = game:GetService("Workspace")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
+-- Kiểm tra xem bảng Config có tồn tại hay không để tránh lỗi crash script ban đầu
+if not getgenv().Config then
+    getgenv().Config = {
+        ["Join-to-Team"] = {
+            MARINES = false,
+            PIRATES = true
+        }
+    }
+end
+
+-- Lấy thông tin Sea
 local SeaW = workspace:GetAttribute("Sea")
 
+-- Kiểm tra Team
 local targetTeam = "Pirates"
 if getgenv().Config["Join-to-Team"].MARINES then
     targetTeam = "Marines"
@@ -27,32 +39,35 @@ if currentTeam ~= targetTeam then
     end
 end
 
+-- Tự động Load Script theo Sea (Chỉ chạy khi thuộc tính Sea tồn tại hợp lệ)
 if SeaW == "Sea1" or SeaW == "Sea2" or SeaW == "Sea3" then
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/Ha3kCodeVN/by-FireSnowFireVoinDark/refs/heads/main/" .. SeaW))()
+    -- Sử dụng pcall để nếu link script github bị lỗi/die thì game vẫn tiếp tục chạy vòng lặp phía dưới mà không bị ngắt giữa chừng
+    pcall(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/Ha3kCodeVN/by-FireSnowFireVoinDark/refs/heads/main/" .. SeaW))()
+    end)
 end
 
+-- Vòng lặp giữ vị trí (Đã fix lỗi sai tên biến)
 while true do
     task.wait(0.1)
     
-    local UrseNameW = LocalPlayer and LocalPlayer.Name or "UrseName"
+    -- Lấy chính xác Nhân vật của LocalPlayer (Cách này chuẩn và an toàn hơn việc check tên trong folder)
+    local character = LocalPlayer.Character or Workspace:FindFirstChild("Characters") and Workspace.Characters:FindFirstChild(LocalPlayer.Name)
     
-    local charactersW = Workspace:FindFirstChild("Characters")
-    if charactersW then
-        local character = charactersFolder:FindFirstChild(UrseNameW)
-        if character then
-            local hrp = character:FindFirstChild("HumanoidRootPart")
-            if hrp then
-                local bodyVelocity = hrp:FindFirstChild("BodyCilp")
-                
-                if not bodyVelocity then
-                    bodyVelocity = Instance.new("BodyVelocity")
-                    bodyVelocity.Name = "BodyCilp"
-                    bodyVelocity.MaxForce = Vector3.new(10000, 10000, 10000)
-                    bodyVelocity.Velocity = Vector3.new(0, 0, 0)
-                    bodyVelocity.Parent = hrp
-                else
-                    bodyVelocity.Velocity = Vector3.new(0, 0, 0)
-                end
+    if character then
+        local hrp = character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local bodyVelocity = hrp:FindFirstChild("BodyCilp")
+            
+            if not bodyVelocity then
+                bodyVelocity = Instance.new("BodyVelocity")
+                bodyVelocity.Name = "BodyCilp"
+                -- Tăng MaxForce lên để đảm bảo nhân vật không bị rơi khi chịu trọng lực lớn hoặc bị quái đẩy
+                bodyVelocity.MaxForce = Vector3.new(1e6, 1e6, 1e6) 
+                bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+                bodyVelocity.Parent = hrp
+            else
+                bodyVelocity.Velocity = Vector3.new(0, 0, 0)
             end
         end
     end
