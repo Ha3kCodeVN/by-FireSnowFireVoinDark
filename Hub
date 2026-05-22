@@ -1,0 +1,11 @@
+local redzlib = loadstring(game:HttpGet(
+    "https://raw.githubusercontent.com/Ha3kCodeVN/RedzV5Gui/refs/heads/main/Game-Roblox.txt"
+))()
+
+local Window = redzlib:MakeWindow({
+    Title = "FireSnowFireVoinDark",
+    SubTitle = "",
+    SaveFolder = "SaveData[FireSnowFireVoinDark]"
+})
+
+local Main = Window:MakeTab({"Main"})
