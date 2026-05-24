@@ -1,83 +1,511 @@
--- Load thư viện từ Repo của ông
-local redzlib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ha3kCodeVN/RedzV5Gui/refs/heads/main/Game-Roblox.txt"))()
-
-_G.AutoFarm = false
-_G.M1Spam = false
-
-local Window = redzlib:MakeWindow({
-  Title = "Ha3kCodeVN Hub 🦊",
-  SubTitle = "Kitsune Edition",
-  SaveFolder = "Ha3kConfig.json"
-})
-
-local MainTab = Window:MakeTab({"Auto Farm", "home"})
-
-MainTab:AddToggle({
-  Name = "Kitsune Kill Aura",
-  Default = false,
-  Callback = function(Value)
-      _G.AutoFarm = Value
-  end
-})
-
-task.spawn(function()
-    local Players = game:GetService("Players")
-    local plr = Players.LocalPlayer
-    
-    while task.wait(0.1) do
-        if _G.AutoFarm and plr.Character then
-            local root = plr.Character:FindFirstChild("HumanoidRootPart")
-            local remote = plr.Character:FindFirstChild("Kitsune-Kitsune") and plr.Character["Kitsune-Kitsune"]:FindFirstChild("LeftClickRemote")
-            local enemies = workspace:FindFirstChild("Enemies")
-
-            if root and remote and enemies then
-                for _, npc in ipairs(enemies:GetChildren()) do
-                    local nRoot = npc:FindFirstChild("HumanoidRootPart")
-                    local hum = npc:FindFirstChildOfClass("Humanoid")
-                    
-                    if nRoot and hum and hum.Health > 0 then
-                        if (root.Position - nRoot.Position).Magnitude <= 34 then
-                            npc:SetAttribute("M1", "Aura")
-                            remote:FireServer(Vector3.new(0.1, -1, 0.1), 4, true)
-                        end
-                    end
-                end
-            end
-        end
-    end
-end)
-
-MainTab:AddToggle({
-    Name = "M1 Spam (Kitsune)",
-    Default = false,
-    Callback = function(Value)
-        _G.M1Spam = Value
-    end
-})
-
--- Khai báo biến ban đầu
-local Players = game:GetService("Players")
-local plr = Players.LocalPlayer
-local EnemiesNPC = workspace:WaitForChild("Enemies")
-local args = {Vector3.new(0.1, -1, 0.1), 1, true}
-
--- Vòng lặp xử lý
-task.spawn(function()
-    while true do
-        task.wait(0.1) -- Tốc độ spam
-        
-        if _G.M1Spam then
-            local char = plr.Character
-            local remote = char and char:FindFirstChild("Kitsune-Kitsune") and char["Kitsune-Kitsune"]:FindFirstChild("LeftClickRemote")
-            
-            if remote then
-                for _, npc in ipairs(EnemiesNPC:GetChildren()) do
-                    -- Kiểm tra xem NPC có Attribute "M1" với giá trị là "Aura" không
-                    if npc:GetAttribute("M1") == "Aura" then
-                        remote:FireServer(unpack(args))
-                    end
-                end
-            end
-        end
-    end
-end)
+local v1 = game:GetService("ReplicatedStorage")
+local v_u_2 = game:GetService("Workspace")
+game:GetService("RunService")
+game:GetService("Lighting")
+local v_u_3 = game:GetService("TweenService")
+local v_u_4 = v_u_2:WaitForChild("_WorldOrigin")
+Random.new()
+local _ = game:GetService("Players").LocalPlayer
+CFrame.lookAt(Vector3.new(), Vector3.new(1, 0, 0)):inverse()
+CFrame.lookAt(Vector3.new(), Vector3.new(0, 1, 0)):inverse()
+local v_u_5 = require(v1:WaitForChild("FX"))
+local v_u_6 = require(v1:WaitForChild("Util"))
+local _ = v_u_6.Sound
+local v_u_7 = v_u_6.DestroyAfter
+local v8 = v_u_6.HeartbeatLoopFor
+local _ = v8.HeartbeatLoopFor
+local _ = v8.AwaitHeartbeatLoopFor
+local _ = v_u_6.LightningBolt
+local function v_u_14(p_u_9, p_u_10, p11) -- name: rescheduleDestruction
+	-- upvalues: (copy) v_u_14
+	if (p11 == nil and true or p11) == true or p_u_9:GetAttribute("PrevTimeDestructInitiated") == nil then
+		p_u_9:SetAttribute("PrevTimeDestructInitiated", time())
+	end
+	local v12 = p_u_9:GetAttribute("DestructionDepth") or 0
+	p_u_9:SetAttribute("DestructionDepth", v12 + 1)
+	if v12 >= 100 then
+		p_u_9:Destroy()
+		warn("rescheduleDestruction: Maximum re-entrancy depth of 100 exceeded")
+	else
+		task.delay(p_u_10, function()
+			-- upvalues: (copy) p_u_9, (copy) p_u_10, (ref) v_u_14
+			local v13 = p_u_9:GetAttribute("PrevTimeDestructInitiated")
+			if p_u_10 - (time() - v13) < 0.2 and (p_u_9 ~= nil and p_u_9.Parent ~= nil) then
+				p_u_9:Destroy()
+				return
+			elseif p_u_9 ~= nil and p_u_9.Parent ~= nil then
+				v_u_14(p_u_9, p_u_10, false)
+			end
+		end)
+	end
+end
+local v_u_15 = RaycastParams.new()
+v_u_15.FilterType = Enum.RaycastFilterType.Exclude
+v_u_15.FilterDescendantsInstances = { v_u_2._WorldOrigin, v_u_2.Characters, v_u_2.Enemies }
+return function(p_u_16)
+	-- upvalues: (copy) v_u_2, (copy) v_u_5, (copy) v_u_15, (copy) v_u_6, (copy) v_u_7, (copy) v_u_3, (copy) v_u_4
+	local v_u_17 = p_u_16.player
+	local v18 = p_u_16.hrp
+	if v18 == nil or v18.Parent == nil then
+		warn("Missing hrp, effect code aborted")
+		return
+	else
+		local _ = v18.Parent
+		local v19 = v_u_2.CurrentCamera
+		if (v18.CFrame.Position - v19.CFrame.Position).Magnitude <= 1000 then
+			local v_u_20
+			if p_u_16.transformed == true then
+				v_u_20 = v_u_5:WaitForChild("Kitsune").KitsuneSkillM1T
+			else
+				v_u_20 = v_u_5:WaitForChild("Kitsune").KitsuneSkillM1
+			end
+			local function v41(p_u_21, p_u_22, p_u_23, _, p_u_24, p_u_25) -- name: ClawSlash
+				-- upvalues: (copy) p_u_16, (ref) v_u_2, (ref) v_u_15, (ref) v_u_20, (ref) v_u_6, (copy) v_u_17, (ref) v_u_7, (ref) v_u_3
+				coroutine.wrap(function()
+					-- upvalues: (copy) p_u_22, (ref) p_u_16, (copy) p_u_23, (copy) p_u_21, (ref) v_u_2, (ref) v_u_15, (ref) v_u_20, (copy) p_u_25, (ref) v_u_6, (copy) p_u_24, (ref) v_u_17, (ref) v_u_7
+					task.wait(0)
+					if p_u_22 == 3 then
+						if p_u_16.transformed == false then
+							p_u_23.CFrame = p_u_21.CFrame * CFrame.new(0, -5, -11)
+						else
+							p_u_23.CFrame = p_u_21.CFrame * CFrame.new(0, -5, -15)
+						end
+						local _ = p_u_21.CFrame * CFrame.new(0, 0, -11).Position
+					elseif p_u_22 == 1 then
+						if p_u_16.transformed == false then
+							p_u_23.CFrame = p_u_21.CFrame * CFrame.new(0, 0, -9)
+						else
+							p_u_23.CFrame = p_u_21.CFrame * CFrame.new(0, 0, -12)
+						end
+						local v26 = p_u_21.CFrame * CFrame.new(-5, 0, -8.5).Position
+						local v27 = v_u_2:Raycast(v26 + Vector3.new(0, 1, 0), CFrame.new(v26).UpVector * -11, v_u_15)
+						if v27 then
+							local v28 = v_u_20.GroundSlash:Clone()
+							v28.CFrame = CFrame.new(v27.Position, v27.Position + p_u_25.LookVector)
+							v_u_6.SetParentOverrideWithColor(v28, p_u_24, v_u_17, "KitsuneFruitVFXColor")
+							v_u_7(v28, 7)
+							for _, v_u_29 in ipairs(v28:GetDescendants()) do
+								if v_u_29:IsA("ParticleEmitter") then
+									coroutine.wrap(function()
+										-- upvalues: (copy) v_u_29
+										v_u_29.Enabled = true
+										task.wait(0.2)
+										v_u_29.Enabled = false
+									end)()
+								end
+							end
+						end
+					elseif p_u_22 == 2 then
+						if p_u_16.transformed == false then
+							p_u_23.CFrame = p_u_21.CFrame * CFrame.new(0, 0, -9)
+						else
+							p_u_23.CFrame = p_u_21.CFrame * CFrame.new(0, 0, -12)
+						end
+						local v30 = p_u_21.CFrame * CFrame.new(-5, 0, -8.5).Position
+						local v31 = v_u_2:Raycast(v30 + Vector3.new(0, 1, 0), CFrame.new(v30).UpVector * -11, v_u_15)
+						if v31 then
+							local v32 = v_u_20.GroundSlash2:Clone()
+							v32.CFrame = CFrame.new(v31.Position, v31.Position + p_u_25.LookVector)
+							v_u_6.SetParentOverrideWithColor(v32, p_u_24, v_u_17, "KitsuneFruitVFXColor")
+							v_u_7(v32, 7)
+							for _, v_u_33 in ipairs(v32:GetDescendants()) do
+								if v_u_33:IsA("ParticleEmitter") then
+									coroutine.wrap(function()
+										-- upvalues: (copy) v_u_33
+										v_u_33.Enabled = true
+										task.wait(0.14)
+										v_u_33.Enabled = false
+									end)()
+								end
+							end
+						end
+					end
+					for _, v34 in ipairs(p_u_23:GetDescendants()) do
+						if v34:IsA("ParticleEmitter") then
+							v_u_6.EmitFix(v34, v34:GetAttribute("EmitCount"))
+						end
+					end
+				end)()
+				coroutine.wrap(function()
+					-- upvalues: (copy) p_u_21, (ref) v_u_3
+					for _, v_u_35 in ipairs(p_u_21:GetDescendants()) do
+						if v_u_35:IsA("Beam") then
+							v_u_35.Enabled = true
+							local v_u_36 = v_u_35:GetAttribute("StartDelay")
+							local v_u_37 = v_u_35:GetAttribute("EndDelay")
+							coroutine.wrap(function()
+								-- upvalues: (ref) v_u_3, (copy) v_u_35, (copy) v_u_37, (copy) v_u_36, (ref) p_u_21
+								local v38 = v_u_3:Create(v_u_35, TweenInfo.new(v_u_37, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+									["Width0"] = v_u_35.Width0,
+									["Width1"] = v_u_35.Width1
+								})
+								v_u_35.Width0 = 0
+								v_u_35.Width1 = 0
+								task.wait(v_u_36)
+								v38:Play()
+								task.wait(v_u_37)
+								if v_u_35:IsDescendantOf(p_u_21.Slash2) then
+									task.wait(0.05)
+								elseif v_u_35:IsDescendantOf(p_u_21.Slash3) then
+									task.wait(0.08)
+								elseif v_u_35:IsDescendantOf(p_u_21) and not (v_u_35:IsDescendantOf(p_u_21.Slash3) or v_u_35:IsDescendantOf(p_u_21.Slash2)) then
+									task.wait(0)
+								end
+								local v39 = v_u_3:Create(v_u_35, TweenInfo.new(v_u_37 / 2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+									["Width0"] = 0,
+									["Width1"] = 0
+								})
+								v39:Play()
+								v39.Completed:Wait()
+								v_u_35:Destroy()
+							end)()
+						end
+					end
+				end)()
+				local v40 = v_u_3:Create(p_u_21.Weld, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+					["C0"] = p_u_21.Weld.Part0.CFrame:ToObjectSpace(p_u_21.Weld.Part1.CFrame) * CFrame.Angles(-2.6179938779914944, 0, 0)
+				})
+				v40:Play()
+				v40.Completed:Wait()
+				p_u_21.Weld.Enabled = false
+				p_u_21.Anchored = true
+				v_u_3:Create(p_u_21, TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+					["CFrame"] = p_u_21.CFrame * CFrame.Angles(-1.3089969389957472, 0, 0)
+				}):Play()
+			end
+			local function v57(p_u_42, _, p_u_43, _) -- name: ClawSpin
+				-- upvalues: (ref) v_u_3, (ref) v_u_2, (ref) v_u_15, (ref) v_u_20, (ref) v_u_6, (ref) v_u_4, (copy) v_u_17, (ref) v_u_7
+				coroutine.wrap(function()
+					-- upvalues: (copy) p_u_42, (ref) v_u_3
+					for _, v_u_44 in ipairs(p_u_42:GetDescendants()) do
+						if v_u_44:IsA("Beam") then
+							v_u_44.Enabled = true
+							local v_u_45 = v_u_44:GetAttribute("StartDelay")
+							local v_u_46 = v_u_44:GetAttribute("EndDelay")
+							coroutine.wrap(function()
+								-- upvalues: (ref) v_u_3, (copy) v_u_44, (copy) v_u_46, (copy) v_u_45
+								local v47 = v_u_3:Create(v_u_44, TweenInfo.new(v_u_46, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+									["Width0"] = v_u_44.Width0,
+									["Width1"] = v_u_44.Width1
+								})
+								v_u_44.Width0 = 0
+								v_u_44.Width1 = 0
+								task.wait(v_u_45)
+								v47:Play()
+								task.wait(v_u_46)
+								task.wait(0.15)
+								local v48 = v_u_3:Create(v_u_44, TweenInfo.new(v_u_46 / 2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+									["Width0"] = 0,
+									["Width1"] = 0
+								})
+								v48:Play()
+								v48.Completed:Wait()
+								v_u_44:Destroy()
+							end)()
+						elseif v_u_44:IsA("Motor6D") and v_u_44:GetAttribute("Z") then
+							local v49 = v_u_44:GetAttribute("Z")
+							local v_u_50 = v_u_44:GetAttribute("ZO")
+							local v_u_51 = v_u_3:Create(v_u_44, TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out, 0, false, 0.3), {
+								["C0"] = p_u_42.Weld.Part0.CFrame:ToObjectSpace(p_u_42.Weld.Part1.CFrame) * CFrame.new(0, 0, v49 / 2) * CFrame.Angles(0, v_u_50, 0)
+							})
+							v_u_51:Play()
+							coroutine.wrap(function()
+								-- upvalues: (ref) v_u_51, (ref) v_u_3, (copy) v_u_44, (ref) p_u_42, (copy) v_u_50
+								v_u_51.Completed:Wait()
+								v_u_51 = v_u_3:Create(v_u_44, TweenInfo.new(0.3), {
+									["C0"] = p_u_42.Weld.Part0.CFrame:ToObjectSpace(p_u_42.Weld.Part1.CFrame) * CFrame.Angles(0, v_u_50, 0)
+								})
+								v_u_51:Play()
+							end)()
+						end
+					end
+				end)()
+				coroutine.wrap(function()
+					-- upvalues: (copy) p_u_43, (ref) v_u_2, (ref) v_u_15, (ref) v_u_20, (ref) v_u_6, (ref) v_u_4, (ref) v_u_17, (ref) v_u_7
+					local v52 = p_u_43.Position
+					if v_u_2:Raycast(v52 + Vector3.new(0, 1, 0), CFrame.new(v52).UpVector * -5, v_u_15) then
+						local v53 = v_u_20.Slash2Wind:Clone()
+						v53.Position = p_u_43.Position
+						v_u_6.SetParentOverrideWithColor(v53, v_u_4, v_u_17, "KitsuneFruitVFXColor")
+						v_u_7(v53, 7)
+						v53.Weld.Part0 = p_u_43
+						v53.Weld.Part1.Massless = true
+						for _, v54 in ipairs(v53:GetDescendants()) do
+							if v54:IsA("ParticleEmitter") then
+								v54.Enabled = true
+							end
+						end
+						task.wait(0.3)
+						v53.Weld.Enabled = false
+						v53.Anchored = true
+						for _, v55 in ipairs(v53:GetDescendants()) do
+							if v55:IsA("ParticleEmitter") then
+								v55.Enabled = false
+							end
+						end
+					end
+				end)()
+				for _ = 1, 4 do
+					local v56 = v_u_3:Create(p_u_42.Weld, TweenInfo.new(0.06, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+						["C0"] = p_u_42.Weld.Part0.CFrame:ToObjectSpace(p_u_42.Weld.Part1.CFrame) * CFrame.Angles(0, -2.6179938779914944, 0)
+					})
+					v56:Play()
+					v56.Completed:Wait()
+				end
+				p_u_42.Weld.Enabled = false
+				p_u_42.Anchored = true
+				v_u_3:Create(p_u_42, TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+					["CFrame"] = p_u_42.CFrame * CFrame.Angles(0, -1.3089969389957472, 0)
+				}):Play()
+			end
+			local function v75(p_u_58, p_u_59, _, p_u_60, p_u_61) -- name: TailSlam
+				-- upvalues: (ref) v_u_6, (ref) v_u_2, (ref) v_u_15, (ref) v_u_20, (copy) v_u_17, (ref) v_u_7, (ref) v_u_3
+				coroutine.wrap(function()
+					-- upvalues: (copy) p_u_59, (copy) p_u_61, (ref) v_u_6, (ref) v_u_2, (ref) v_u_15, (ref) v_u_20, (copy) p_u_60, (ref) v_u_17, (ref) v_u_7
+					task.wait(0)
+					p_u_59.CFrame = p_u_61.CFrame * CFrame.new(0, 7, -18)
+					for _, v62 in ipairs(p_u_59:GetDescendants()) do
+						if v62:IsA("ParticleEmitter") then
+							v_u_6.EmitFix(v62, v62:GetAttribute("EmitCount"))
+						end
+					end
+					task.wait(0.025)
+					local v63 = p_u_61.CFrame * CFrame.new(0, 0, -18).Position
+					local v64 = v_u_2:Raycast(v63 + Vector3.new(0, 1, 0), CFrame.new(v63).UpVector * -14, v_u_15)
+					if v64 then
+						local v65 = v_u_20.GroundHit:Clone()
+						v65.CFrame = CFrame.new(v64.Position)
+						v_u_6.SetParentOverrideWithColor(v65, p_u_60, v_u_17, "KitsuneFruitVFXColor")
+						v_u_7(v65, 7)
+						local v66 = v65.Attachment
+						local v67 = math.random(-90, 90)
+						v66.Orientation = Vector3.new(0, v67, 0)
+						for _, v_u_68 in ipairs(v65:GetDescendants()) do
+							if v_u_68:IsA("ParticleEmitter") then
+								coroutine.wrap(function()
+									-- upvalues: (copy) v_u_68, (ref) v_u_6
+									if v_u_68:GetAttribute("EmitDelay") ~= 0 then
+										task.wait(v_u_68:GetAttribute("EmitDelay"))
+									end
+									v_u_6.EmitFix(v_u_68, v_u_68:GetAttribute("EmitCount"))
+								end)()
+							end
+						end
+					end
+				end)()
+				coroutine.wrap(function()
+					-- upvalues: (copy) p_u_58, (ref) v_u_3
+					for _, v_u_69 in ipairs(p_u_58:GetDescendants()) do
+						if v_u_69:IsA("Beam") then
+							v_u_69.Enabled = true
+							local v_u_70 = v_u_69:GetAttribute("StartDelay")
+							local v_u_71 = v_u_69:GetAttribute("EndDelay")
+							coroutine.wrap(function()
+								-- upvalues: (ref) v_u_3, (copy) v_u_69, (copy) v_u_71, (copy) v_u_70
+								local v72 = v_u_3:Create(v_u_69, TweenInfo.new(v_u_71, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+									["Width0"] = v_u_69.Width0,
+									["Width1"] = v_u_69.Width1
+								})
+								v_u_69.Width0 = 0
+								v_u_69.Width1 = 0
+								task.wait(v_u_70)
+								v72:Play()
+								task.wait(v_u_71)
+								local v73 = v_u_3:Create(v_u_69, TweenInfo.new(v_u_71 / 2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+									["Width0"] = 0,
+									["Width1"] = 0
+								})
+								v73:Play()
+								v73.Completed:Wait()
+								v_u_69:Destroy()
+							end)()
+						end
+					end
+				end)()
+				local v74 = v_u_3:Create(p_u_58.Weld, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+					["C0"] = p_u_58.Weld.Part0.CFrame:ToObjectSpace(p_u_58.Weld.Part1.CFrame) * CFrame.Angles(-2.6179938779914944, 0, 0)
+				})
+				v74:Play()
+				v74.Completed:Wait()
+				p_u_58.Weld.Enabled = false
+				p_u_58.Anchored = true
+				v_u_3:Create(p_u_58, TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+					["CFrame"] = p_u_58.CFrame * CFrame.Angles(-1.7453292519943295, 0, 0)
+				}):Play()
+			end
+			local function v86(p_u_76, p_u_77, _, _, p_u_78) -- name: TailSlash
+				-- upvalues: (copy) p_u_16, (ref) v_u_6, (ref) v_u_3
+				coroutine.wrap(function()
+					-- upvalues: (ref) p_u_16, (copy) p_u_77, (copy) p_u_78, (ref) v_u_6
+					task.wait(0)
+					if p_u_16.transformed == false then
+						p_u_77.CFrame = p_u_78.CFrame * CFrame.new(0, 3, -25) * CFrame.Angles(0, 0, 1.7453292519943295)
+					else
+						p_u_77.CFrame = p_u_78.CFrame * CFrame.new(0, 3, -35) * CFrame.Angles(0, 0, 1.7453292519943295)
+					end
+					for _, v79 in ipairs(p_u_77:GetDescendants()) do
+						if v79:IsA("ParticleEmitter") then
+							v_u_6.EmitFix(v79, v79:GetAttribute("EmitCount"))
+						end
+					end
+					task.wait(0.025)
+				end)()
+				coroutine.wrap(function()
+					-- upvalues: (copy) p_u_76, (ref) v_u_3
+					for _, v_u_80 in ipairs(p_u_76:GetDescendants()) do
+						if v_u_80:IsA("Beam") then
+							v_u_80.Enabled = true
+							local v_u_81 = v_u_80:GetAttribute("StartDelay")
+							local v_u_82 = v_u_80:GetAttribute("EndDelay")
+							coroutine.wrap(function()
+								-- upvalues: (ref) v_u_3, (copy) v_u_80, (copy) v_u_82, (copy) v_u_81
+								local v83 = v_u_3:Create(v_u_80, TweenInfo.new(v_u_82, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+									["Width0"] = v_u_80.Width0,
+									["Width1"] = v_u_80.Width1
+								})
+								v_u_80.Width0 = 0
+								v_u_80.Width1 = 0
+								task.wait(v_u_81)
+								v83:Play()
+								task.wait(v_u_82)
+								local v84 = v_u_3:Create(v_u_80, TweenInfo.new(v_u_82 / 2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+									["Width0"] = 0,
+									["Width1"] = 0
+								})
+								v84:Play()
+								v84.Completed:Wait()
+								v_u_80:Destroy()
+							end)()
+						end
+					end
+				end)()
+				local v85 = v_u_3:Create(p_u_76.Weld, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+					["C0"] = p_u_76.Weld.Part0.CFrame:ToObjectSpace(p_u_76.Weld.Part1.CFrame) * CFrame.Angles(-2.6179938779914944, 0, 0)
+				})
+				v85:Play()
+				v85.Completed:Wait()
+				p_u_76.Weld.Enabled = false
+				p_u_76.Anchored = true
+				v_u_3:Create(p_u_76, TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+					["CFrame"] = p_u_76.CFrame * CFrame.Angles(-1.7453292519943295, 0, 0)
+				}):Play()
+			end
+			local v87 = p_u_16.index
+			local v88 = v_u_4
+			local v89 = v18.CFrame
+			local v90 = v_u_15
+			if v87 == 1 then
+				v_u_6.Sound:Play("Basic Attack 1", v18)
+				local v91 = v_u_20.Slash:Clone()
+				local v92 = v_u_20.SlashHit:Clone()
+				v91.CFrame = v89
+				v91.Weld.Part0 = v18
+				v91.Weld.Part1.Massless = true
+				v91.Weld.C0 = v91.Weld.Part0.CFrame:ToObjectSpace(v91.Weld.Part1.CFrame) * CFrame.Angles(0, 0, -0.7853981633974483) * CFrame.Angles(2.9670597283903604, 0, 0)
+				v_u_6.SetParentOverrideWithColor(v91, v88, v_u_17, "KitsuneFruitVFXColor")
+				v_u_7(v91, 7)
+				v_u_6.SetParentOverrideWithColor(v92, v88, v_u_17, "KitsuneFruitVFXColor")
+				v_u_7(v92, 7)
+				v41(v91, v87, v92, v90, v88, v89)
+			elseif v87 == 2 then
+				v_u_6.Sound:Play("Basic Attack 2", v18)
+				local v93 = v_u_20.Slash:Clone()
+				local v94 = v_u_20.SlashHit:Clone()
+				v93.CFrame = v89
+				v93.Weld.Part0 = v18
+				v93.Weld.Part1.Massless = true
+				v93.Weld.C0 = v93.Weld.Part0.CFrame:ToObjectSpace(v93.Weld.Part1.CFrame) * CFrame.Angles(0, 0, -2.0943951023931953) * CFrame.Angles(2.9670597283903604, 0, 0)
+				v_u_6.SetParentOverrideWithColor(v93, v88, v_u_17, "KitsuneFruitVFXColor")
+				v_u_7(v93, 7)
+				v_u_6.SetParentOverrideWithColor(v94, v88, v_u_17, "KitsuneFruitVFXColor")
+				v_u_7(v94, 7)
+				v41(v93, v87, v94, v90, v88, v89)
+			elseif v87 == 3 then
+				v_u_6.Sound:Play("Basic Attack 1", v18)
+				local v95 = v_u_20.Slash2:Clone()
+				local v96 = v_u_20.SlashHit2:Clone()
+				v95.CFrame = v89 * CFrame.new(0, 1, 0)
+				v95.Weld.Part0 = v18
+				v95.Weld.Part1.Massless = true
+				v95.Weld.C0 = v95.Weld.Part0.CFrame:ToObjectSpace(v95.Weld.Part1.CFrame) * CFrame.Angles(0, 0, 1.3089969389957472) * CFrame.Angles(2.9670597283903604, 0, 0)
+				v_u_6.SetParentOverrideWithColor(v95, v88, v_u_17, "KitsuneFruitVFXColor")
+				v_u_7(v95, 7)
+				v_u_6.SetParentOverrideWithColor(v96, v88, v_u_17, "KitsuneFruitVFXColor")
+				v_u_7(v96, 7)
+				v41(v95, v87, v96, v90, v88, v89)
+			elseif v87 == 4 then
+				v_u_6.Sound:Play("Basic Attack 3", v18)
+				local v97 = v_u_20.Slash3:Clone()
+				v97.CFrame = v89 * CFrame.new(0, 1, 0)
+				v97.Weld.Part0 = v18
+				v97.Weld.Part1.Massless = true
+				v97.Weld.C0 = v97.Weld.Part0.CFrame:ToObjectSpace(v97.Weld.Part1.CFrame) * CFrame.Angles(-0.17453292519943295, 0, 0.008726646259971648)
+				v_u_6.SetParentOverrideWithColor(v97, v88, v_u_17, "KitsuneFruitVFXColor")
+				v_u_7(v97, 7)
+				v57(v97, v88, v18)
+			elseif v87 == 5 then
+				if p_u_16.playerOnGround == false then
+					v_u_6.Sound:Play("Basic Attack 4", v18)
+					if p_u_16.transformed == true then
+						v_u_20 = v_u_5:WaitForChild("Kitsune").KitsuneSkillM1v2T
+					else
+						v_u_20 = v_u_5:WaitForChild("Kitsune").KitsuneSkillM1v2
+					end
+					local v98 = v_u_20.Slash4:Clone()
+					local v99 = v_u_20.SlashHit4:Clone()
+					for _, v100 in ipairs(v98:GetDescendants()) do
+						if v100:IsA("Beam") then
+							v100.CurveSize0 = v100.CurveSize0 * 1.5
+							v100.CurveSize1 = v100.CurveSize1 * 1.5
+							v100.Width0 = v100.Width0 * 1.5
+							v100.Width1 = v100.Width1 * 1.5
+						elseif v100:IsA("Attachment") then
+							local v101 = v100.Position.X * 1.5
+							local v102 = v100.Position.Y * 1.5
+							local v103 = v100.Position.Z * 1.5
+							v100.Position = Vector3.new(v101, v102, v103)
+						end
+					end
+					v98.CFrame = v89 * CFrame.new(0, 5, 3)
+					v98.Weld.Part1.Massless = true
+					v98.Weld.Part0 = v18
+					v98.Weld.C0 = v98.Weld.Part0.CFrame:ToObjectSpace(v98.Weld.Part1.CFrame) * CFrame.Angles(0, 0, 1.7453292519943295) * CFrame.Angles(3.490658503988659, 0, 0)
+					v_u_6.SetParentOverrideWithColor(v98, v88, v_u_17, "KitsuneFruitVFXColor")
+					v_u_7(v98, 7)
+					v_u_6.SetParentOverrideWithColor(v99, v88, v_u_17, "KitsuneFruitVFXColor")
+					v_u_7(v99, 7)
+					v86(v98, v99, v90, v88, v18, v90)
+					local v104 = v98.Position
+					local v105 = 5 or 8
+					local v106 = 6 or 14
+					local v107 = 0.15 or 0.2
+					local v108 = 0.25 or 0.7
+					if (v_u_2.CurrentCamera.CFrame.Position - v104).Magnitude < 100 then
+						v_u_6.CameraShaker:ShakeOnce(v105, v106, v107, v108)
+					end
+				else
+					v_u_6.Sound:Play("Ground Basic Attack 4 Explosion", v18)
+					local v109 = v_u_20.Slash4:Clone()
+					local v110 = v_u_20.SlashHit4:Clone()
+					v109.CFrame = v89 * CFrame.new(0, 0, 3)
+					v109.Weld.Part0 = v18
+					v109.Weld.Part1.Massless = true
+					v109.Weld.C0 = v109.Weld.Part0.CFrame:ToObjectSpace(v109.Weld.Part1.CFrame) * CFrame.Angles(3.490658503988659, 0, 0)
+					v_u_6.SetParentOverrideWithColor(v109, v88, v_u_17, "KitsuneFruitVFXColor")
+					v_u_7(v109, 7)
+					v_u_6.SetParentOverrideWithColor(v110, v88, v_u_17, "KitsuneFruitVFXColor")
+					v_u_7(v110, 7)
+					v75(v109, v110, v90, v88, v18, v90)
+					local v111 = v109.Position
+					local v112 = 5 or 8
+					local v113 = 6 or 14
+					local v114 = 0.15 or 0.2
+					local v115 = 0.25 or 0.7
+					if (v_u_2.CurrentCamera.CFrame.Position - v111).Magnitude < 100 then
+						v_u_6.CameraShaker:ShakeOnce(v112, v113, v114, v115)
+					end
+				end
+			end
+		end
+	end
+end
