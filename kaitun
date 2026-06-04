@@ -1,8 +1,9 @@
 local Workspace = game:GetService("Workspace")
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
--- Kiểm tra xem bảng Config có tồn tại hay không để tránh lỗi crash script ban đầu
 if not getgenv().Config then
     getgenv().Config = {
         ["Join-to-Team"] = {
@@ -12,11 +13,9 @@ if not getgenv().Config then
     }
 end
 
--- Lấy thông tin Sea
 local SeaW = workspace:GetAttribute("Sea")
-
--- Kiểm tra Team
 local targetTeam = "Pirates"
+
 if getgenv().Config["Join-to-Team"].MARINES then
     targetTeam = "Marines"
 elseif getgenv().Config["Join-to-Team"].PIRATES then
@@ -26,43 +25,70 @@ end
 local currentTeam = LocalPlayer.Team and LocalPlayer.Team.Name or ""
 
 if currentTeam ~= targetTeam then 
-    local args = {
-        "SetTeam",
-        targetTeam
-    }
-    local remotes = game:GetService("ReplicatedStorage"):WaitForChild("Remotes", 1)
+    local remotes = ReplicatedStorage:WaitForChild("Remotes", 1)
     if remotes then
         local commF = remotes:WaitForChild("CommF_", 1)
         if commF then
-            commF:InvokeServer(unpack(args))
+            commF:InvokeServer("SetTeam", targetTeam)
         end
     end
 end
 
--- Tự động Load Script theo Sea (Chỉ chạy khi thuộc tính Sea tồn tại hợp lệ)
 if SeaW == "Sea1" or SeaW == "Sea2" or SeaW == "Sea3" then
-    -- Sử dụng pcall để nếu link script github bị lỗi/die thì game vẫn tiếp tục chạy vòng lặp phía dưới mà không bị ngắt giữa chừng
     pcall(function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/Ha3kCodeVN/by-FireSnowFireVoinDark/refs/heads/main/" .. SeaW))()
     end)
 end
 
--- Vòng lặp giữ vị trí (Đã fix lỗi sai tên biến)
+local function getMyCharacter()
+    local charactersFolder = Workspace:FindFirstChild("Characters")
+    if charactersFolder then
+        return charactersFolder:FindFirstChild(LocalPlayer.Name)
+    end
+    return LocalPlayer.Character
+end
+
+local function isBusoOn()
+    local myChar = getMyCharacter()
+    if myChar and myChar:FindFirstChild("HasBuso", false) then
+        return true
+    end
+    return false
+end
+
+task.spawn(function()
+    while true do
+        if not isBusoOn() then
+            local remotes = ReplicatedStorage:FindFirstChild("Remotes")
+            local commF = remotes and remotes:FindFirstChild("CommF_")
+            if commF then
+                commF:InvokeServer("Buso")
+            end
+        end
+        task.wait(1)
+    end
+end)
+
+RunService.Stepped:Connect(function()
+    local character = getMyCharacter()
+    if character then
+        for _, child in ipairs(character:GetDescendants()) do
+            if child:IsA("BasePart") then
+                child.CanCollide = false
+            end
+        end
+    end
+end)
+
 while true do
-    task.wait(0.1)
-    
-    -- Lấy chính xác Nhân vật của LocalPlayer (Cách này chuẩn và an toàn hơn việc check tên trong folder)
-    local character = LocalPlayer.Character or Workspace:FindFirstChild("Characters") and Workspace.Characters:FindFirstChild(LocalPlayer.Name)
-    
+    local character = getMyCharacter()
     if character then
         local hrp = character:FindFirstChild("HumanoidRootPart")
         if hrp then
             local bodyVelocity = hrp:FindFirstChild("BodyCilp")
-            
             if not bodyVelocity then
                 bodyVelocity = Instance.new("BodyVelocity")
                 bodyVelocity.Name = "BodyCilp"
-                -- Tăng MaxForce lên để đảm bảo nhân vật không bị rơi khi chịu trọng lực lớn hoặc bị quái đẩy
                 bodyVelocity.MaxForce = Vector3.new(1e6, 1e6, 1e6) 
                 bodyVelocity.Velocity = Vector3.new(0, 0, 0)
                 bodyVelocity.Parent = hrp
@@ -71,4 +97,5 @@ while true do
             end
         end
     end
+    task.wait(0.1)
 end
