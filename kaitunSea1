@@ -1,0 +1,417 @@
+local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+
+local enemiesFolder = Workspace:FindFirstChild("Enemies")
+local charactersFolder = Workspace:FindFirstChild("Characters")
+local localPlayer = Players.LocalPlayer
+
+-- Cấu hình thông số di chuyển
+local TWEEN_SPEED = 350
+local Player_Y = 20 
+
+-- Cấu hình gom quái (Bring Mobs)
+local MAX_DISTANCE_BRING = 10000
+local RADIUS_VALUE = 10000
+local MAX_DISTANCE_W = 100
+
+-- Tọa độ cổng dịch chuyển (Luôn dùng kiểu dữ liệu vector mới)
+local Sky1_Vector3 = vector.create(-4607.8232421875, 874.3909912109375, -1667.5570068359375)
+local Sky2_Vector3 = vector.create(-7894.6181640625, 5547.14208984375, -380.2909851074219)
+local Fish_Vector3 = vector.create(61163.8515625, 11.680007934570312, 1819.7840576171875)
+local Surface_Vortex_Vector3 = vector.create(3864.68798828125, 6.73699951171875, -1926.2139892578125)
+
+local currentTween = nil 
+local lastTargetPos = Vector3.new()
+
+if not enemiesFolder or not charactersFolder or not localPlayer then
+    return
+end
+
+local CommF = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("CommF_")
+
+-- Hàm bổ trợ đổi từ vector (mới) sang Vector3
+local function toVector3(vec)
+    if typeof(vec) == "vector" then
+        return Vector3.new(vec.x, vec.y, vec.z)
+    end
+    return vec
+end
+
+-- Tối ưu hóa Network & Bán kính mô phỏng nhận quái
+task.spawn(function()
+    while true do
+        pcall(function()
+            localPlayer.MaximumSimulationRadius = RADIUS_VALUE
+            localPlayer.SimulationRadius = RADIUS_VALUE
+            settings().Network.IncomingReplicationLag = 0
+        end)
+        task.wait(1)
+    end
+end)
+
+-- Noclip xuyên địa hình khi đang di chuyển tránh kẹt
+task.spawn(function()
+    RunService.Stepped:Connect(function()
+        local Character = localPlayer.Character
+        if Character then
+            for _, child in pairs(Character:GetDescendants()) do
+                if child:IsA("BasePart") then
+                    child.CanCollide = false
+                end
+            end
+        end
+    end)
+end)
+
+-- Cấu hình cấp độ, bãi quái (Chỉ trả về 5 tham số cốt lõi)
+local function getCurrentIslandConfig()
+    local playerData = localPlayer:FindFirstChild("Data")
+    local levelValue = playerData and playerData:FindFirstChild("Level")
+    if not levelValue then return nil end
+    
+    local myLevel = levelValue.Value
+
+    local questName = ""
+    local questNum = 1
+    local mobName = ""
+    local pos = Vector3.new()
+    local gateVector = nil
+
+    if myLevel >= 1 and myLevel < 60 then
+        questName = "BanditQuest1"; questNum = 1; mobName = "Bandit"; pos = Vector3.new(1059.31, 15.42, 1548.32);
+    elseif myLevel >= 60 and myLevel < 75 then
+        questName = "DesertQuest"; questNum = 1; mobName = "Desert Bandit"; pos = Vector3.new(894.489013671875, 5.1399993896484375, 4392.43408203125);
+        gateVector = Surface_Vortex_Vector3;
+    elseif myLevel >= 70 and myLevel < 90 then
+        questName = "DesertQuest"; questNum = 2; mobName = "Desert Officer"; pos = Vector3.new(1607.6939697265625, 9.98231315612793, 4372.07421875);
+        gateVector = Surface_Vortex_Vector3;
+    elseif myLevel >= 90 and myLevel < 100 then
+        questName = "SnowQuest"; questNum = 1; mobName = "Snow Bandit"; pos = Vector3.new(1316.1627197265625, 85.97074127197266, -1396.5240478515625);
+        gateVector = Surface_Vortex_Vector3;
+    elseif myLevel >= 100 and myLevel < 120 then
+        questName = "SnowQuest"; questNum = 2; mobName = "Snowman"; pos = Vector3.new(1120.552001953125, 106.32659912109375, -1546.8489990234375);
+        gateVector = Surface_Vortex_Vector3;
+    elseif myLevel >= 120 and myLevel < 150 then
+        questName = "MarineQuest2"; questNum = 1; mobName = "Chief Petty Officer"; pos = Vector3.new(-5039.5859375, 27.350006103515625, 4324.68017578125);
+        gateVector = Sky1_Vector3;
+    elseif myLevel >= 150 and myLevel < 175 then
+        questName = "SkyQuest"; questNum = 1; mobName = "Sky Bandit"; pos = Vector3.new(-4955.32080078125, 294.3970031738281, -2900.992919921875);
+        gateVector = Sky1_Vector3;
+    elseif myLevel >= 175 and myLevel < 190 then
+        questName = "SkyQuest"; questNum = 2; mobName = "Dark Master"; pos = Vector3.new(-5224.336, 429.985, -2279.281);
+        gateVector = Sky1_Vector3;
+    elseif myLevel >= 190 and myLevel < 210 then
+        questName = "PrisonerQuest"; questNum = 1; mobName = "Prisoner"; pos = Vector3.new(5144.94091796875, 1.7427453994750977, 491.92498779296875);
+        gateVector = Surface_Vortex_Vector3;
+    elseif myLevel >= 210 and myLevel < 250 then
+        questName = "PrisonerQuest"; questNum = 2; mobName = "Dangerous Prisoner"; pos = Vector3.new(5595.01611328125, 1.7421704530715942, 759.0750122070312);
+        gateVector = Surface_Vortex_Vector3;
+    elseif myLevel >= 250 and myLevel < 275 then
+        questName = "ColosseumQuest"; questNum = 1; mobName = "Toga Warrior"; pos = Vector3.new(-1926.125, 7.533, -2816.405);
+        gateVector = Sky1_Vector3;
+    elseif myLevel >= 275 and myLevel < 300 then
+        questName = "ColosseumQuest"; questNum = 2; mobName = "Gladiator"; pos = Vector3.new(-1328.473, 58.816, -3231.904);
+        gateVector = Sky1_Vector3;
+    elseif myLevel >= 300 and myLevel < 325 then
+        questName = "MagmaQuest"; questNum = 1; mobName = "Military Soldier"; pos = Vector3.new(-5313.370, 10.949, 8515.293);
+        gateVector = Sky1_Vector3;
+    elseif myLevel >= 325 and myLevel < 375 then
+        questName = "MagmaQuest"; questNum = 2; mobName = "Military Spy"; pos = Vector3.new(-5794.941, 66.804, 8803.772);
+        gateVector = Sky1_Vector3;
+    elseif myLevel >= 375 and myLevel < 400 then
+        questName = "FishmanQuest"; questNum = 1; mobName = "Fishman Warrior"; pos = Vector3.new(60906.902, 47.180, 1469.125);
+        gateVector = Fish_Vector3;
+    elseif myLevel >= 400 and myLevel < 450 then
+        questName = "FishmanQuest"; questNum = 2; mobName = "Fishman Commando"; pos = Vector3.new(61911.812, 48.573, 1456.546);
+        gateVector = Fish_Vector3;
+    elseif myLevel >= 450 and myLevel < 475 then
+        questName = "SkyExp1Quest"; questNum = 1; mobName = "God's Guard"; pos = Vector3.new(-4721.889, 843.875, -1949.965);
+        gateVector = Sky1_Vector3;
+    elseif myLevel >= 475 and myLevel < 525 then
+        questName = "SkyExp1Quest"; questNum = 2; mobName = "Shanda"; pos = Vector3.new(-7859.098, 5544.189, -381.476);
+        gateVector = Sky2_Vector3;
+    elseif myLevel >= 525 and myLevel < 550 then
+        questName = "SkyExp2Quest"; questNum = 1; mobName = "Royal Squad"; pos = Vector3.new(-7637.068, 5610.972, -1445.113);
+        gateVector = Sky2_Vector3;
+    elseif myLevel >= 550 and myLevel < 625 then
+        questName = "SkyExp2Quest"; questNum = 2; mobName = "Royal Soldier"; pos = Vector3.new(-7839.264, 5612.992, -1708.754);
+        gateVector = Sky2_Vector3;
+    elseif myLevel >= 625 and myLevel < 650 then
+        questName = "FountainQuest"; questNum = 1; mobName = "Galley Pirate"; pos = Vector3.new(5578.18798828125, 35.3489990234375, 3925.39697265625);
+        gateVector = Surface_Vortex_Vector3;
+    elseif myLevel >= 650 then
+        questName = "FountainQuest"; questNum = 2; mobName = "Galley Captain"; pos = Vector3.new(5728.632, 91.764, 4843.183);
+        gateVector = Surface_Vortex_Vector3;
+    end
+
+    return questName, questNum, mobName, pos, gateVector
+end
+
+local function stopCurrentTween()
+    if currentTween then
+        currentTween:Cancel()
+        currentTween:Destroy()
+        currentTween = nil
+    end
+end
+
+local function tweenTo(rootPart, targetPos)
+    local distance = (rootPart.Position - targetPos).Magnitude
+    if distance < 3 then 
+        stopCurrentTween()
+        return 
+    end 
+
+    if currentTween and currentTween.PlaybackState == Enum.PlaybackState.Playing then
+        if (targetPos - lastTargetPos).Magnitude < 3 then
+            return 
+        end
+    end
+
+    stopCurrentTween() 
+    lastTargetPos = targetPos
+
+    local duration = distance / TWEEN_SPEED
+    local tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+    local targetCFrame = CFrame.new(targetPos) * (rootPart.CFrame - rootPart.Position)
+    
+    pcall(function()
+        rootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+        rootPart.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+    end)
+    
+    currentTween = TweenService:Create(rootPart, tweenInfo, {CFrame = targetCFrame})
+    currentTween:Play()
+end
+
+local function safeTeleportToGate(rootPart, gatePos3D, gateVector)
+    stopCurrentTween() 
+    task.wait(0.2)      
+    
+    if CommF then
+        pcall(function()
+            CommF:InvokeServer("requestEntrance", gateVector)
+        end)
+    end
+    task.wait(0.2) 
+    
+    rootPart.CFrame = CFrame.new(gatePos3D)
+    task.wait(0.4) 
+end
+
+local function hasActiveQuest()
+    local playerGui = localPlayer:FindFirstChildOfClass("PlayerGui")
+    local mainGui = playerGui and playerGui:FindFirstChild("Main")
+    local questFrame = mainGui and mainGui:FindFirstChild("Quest")
+    return questFrame and questFrame.Visible == true
+end
+
+local function getAliveTargetMob(mobName)
+    for _, enemy in pairs(enemiesFolder:GetChildren()) do
+        if enemy.Name == mobName then
+            local humanoid = enemy:FindFirstChildOfClass("Humanoid")
+            local rootPart = enemy:FindFirstChild("HumanoidRootPart") or enemy.PrimaryPart
+            
+            if humanoid and humanoid.Health > 0 and rootPart then
+                return rootPart, humanoid 
+            end
+        end
+    end
+    return nil, nil
+end
+
+local function getBringTargetPosition()
+    local myChar = localPlayer.Character or charactersFolder:FindFirstChild(localPlayer.Name)
+    if myChar then
+        local hrp = myChar:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            return hrp.Position + Vector3.new(0, -20, 0)
+        end
+    end
+    return nil
+end
+
+local function ApplyNoclipFull(enemy)
+    if enemy then
+        for _, child in pairs(enemy:GetDescendants()) do
+            if child:IsA("BasePart") then
+                child.CanCollide = false
+            end
+        end
+    end
+end
+
+local function SetupMob(enemy)
+    if enemy:GetAttribute("BusoEnabled") ~= nil then enemy:SetAttribute("BusoEnabled", false) end
+    enemy:SetAttribute("Clashable", true) 
+    
+    local hrp = enemy:FindFirstChild("HumanoidRootPart")
+    local humanoid = enemy:FindFirstChildOfClass("Humanoid")
+    
+    if hrp and hrp:IsA("BasePart") then
+        if humanoid then
+            humanoid.Sit = true
+            humanoid.PlatformStand = true
+        end
+        pcall(function()
+            if hrp.Anchored then hrp.Anchored = false end
+            if hrp.SetNetworkOwner then hrp:SetNetworkOwner(localPlayer) end
+        end)
+        ApplyNoclipFull(enemy)
+
+        local bp = hrp:FindFirstChild("BringMob") or Instance.new("BodyPosition")
+        bp.Name = "BringMob"
+        bp.MaxForce = Vector3.new(10000000, 10000000, 10000000)
+        bp.P = 30000; bp.D = 1200;
+        bp.Parent = hrp
+        return bp
+    end
+    return nil
+end
+
+-- =========================================================================
+-- [VÒNG LẶP CHÍNH]: ĐIỀU HƯỚNG DI CHUYỂN TOÀN MAP
+-- =========================================================================
+task.spawn(function()
+    while task.wait(0.15) do 
+        local Character = localPlayer.Character
+        local RootPart = Character and Character:FindFirstChild("HumanoidRootPart")
+        if not RootPart then continue end 
+
+        local currentQuestName, currentQuestNum, mobName, defaultTargetPos, gateVector = getCurrentIslandConfig()
+        if not currentQuestName or currentQuestName == "" then continue end
+
+        -- Kiểm tra nhận Q
+        if not hasActiveQuest() then
+            stopCurrentTween()
+            if CommF then
+                pcall(function()
+                    CommF:InvokeServer("StartQuest", currentQuestName, currentQuestNum)
+                end)
+            end
+            task.wait(0.3)
+            continue
+        end
+
+        local EnemyRoot, EnemyHumanoid = getAliveTargetMob(mobName)
+        local viTriDich = defaultTargetPos
+        
+        if EnemyRoot and EnemyHumanoid then 
+            viTriDich = Vector3.new(EnemyRoot.Position.X, EnemyRoot.Position.Y + Player_Y, EnemyRoot.Position.Z)
+        else
+            viTriDich = Vector3.new(defaultTargetPos.X, defaultTargetPos.Y + Player_Y, defaultTargetPos.Z)
+        end
+
+        -- [✓ LOGIC FISH ULTRA CLEAN]: Check thẳng bằng gateVector luôn, không cần biến chữ trung gian
+        if gateVector == Fish_Vector3 and RootPart.Position.X < 50000 then
+            stopCurrentTween()
+            if CommF then
+                pcall(function()
+                    CommF:InvokeServer("requestEntrance", Fish_Vector3)
+                end)
+            end
+            task.wait(0.8) 
+            continue
+        end
+
+        if gateVector then
+            local gatePos3D = toVector3(gateVector)
+            
+            local distance_HRP_to_Map = (RootPart.Position - viTriDich).Magnitude
+            local distance_Gate_to_Map = (gatePos3D - viTriDich).Magnitude
+            local distance_HRP_to_Gate = (RootPart.Position - gatePos3D).Magnitude
+
+            if distance_HRP_to_Gate <= 300 then
+                if distance_HRP_to_Map > 4 then
+                    tweenTo(RootPart, viTriDich)
+                else
+                    stopCurrentTween()
+                end
+            elseif distance_Gate_to_Map < distance_HRP_to_Map then
+                safeTeleportToGate(RootPart, gatePos3D, gateVector)
+            else
+                if distance_HRP_to_Map > 4 then
+                    tweenTo(RootPart, viTriDich)
+                else
+                    stopCurrentTween()
+                end
+            end
+        else
+            -- Đảo thường (gateVector == nil): Chỉ sử dụng Tween thẳng, an toàn tuyệt đối
+            local distanceToTarget = (RootPart.Position - viTriDich).Magnitude
+            if distanceToTarget > 4 then
+                tweenTo(RootPart, viTriDich)
+            else
+                stopCurrentTween()
+            end
+        end
+    end
+end)
+
+-- =========================================================================
+-- [VÒNG LẶP GOM QUÁI]: BRING MOBS LOOP
+-- =========================================================================
+task.spawn(function()
+    while true do
+        local targetPos = getBringTargetPosition()
+        local _, _, mobName, _, _ = getCurrentIslandConfig()
+        
+        if targetPos and hasActiveQuest() and mobName and mobName ~= "" then 
+            local myActualPos = targetPos + Vector3.new(0, 20, 0)
+            
+            for _, enemy in pairs(enemiesFolder:GetChildren()) do
+                if enemy.Name == mobName then
+                    local hrp = enemy:FindFirstChild("HumanoidRootPart")
+                    local humanoid = enemy:FindFirstChildOfClass("Humanoid")
+                    
+                    if hrp then
+                        local bp = hrp:FindFirstChild("BringMob")
+                        if not bp then bp = SetupMob(enemy) end
+                        
+                        local distance = (hrp.Position - myActualPos).Magnitude
+                        
+                        enemy:SetAttribute("Clashable", true)
+                        enemy:SetAttribute("BusoEnabled", false)
+                        if humanoid then
+                            if not humanoid.Sit then humanoid.Sit = true end
+                            if not humanoid.PlatformStand then humanoid.PlatformStand = true end
+                        end
+                        
+                        if bp then
+                            if distance <= MAX_DISTANCE_BRING then
+                                bp.MaxForce = Vector3.new(10000000, 10000000, 10000000)
+                                if distance <= MAX_DISTANCE_W then
+                                    bp.P = 8000; bp.D = 800;
+                                else
+                                    bp.P = 40000; bp.D = 1500;
+                                end
+                                bp.Position = targetPos
+                            else
+                                bp.MaxForce = Vector3.new(0, 0, 0)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        task.wait(0.15)
+    end
+end)
+
+enemiesFolder.ChildAdded:Connect(function(newEnemy)
+    task.wait(0.05)
+    local targetPos = getBringTargetPosition()
+    local _, _, mobName, _, _ = getCurrentIslandConfig()
+    
+    if targetPos and hasActiveQuest() and mobName and mobName ~= "" and newEnemy.Name == mobName then
+        local hrp = newEnemy:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local myActualPos = targetPos + Vector3.new(0, 20, 0)
+            local distance = (hrp.Position - myActualPos).Magnitude
+            if distance <= MAX_DISTANCE_BRING then SetupMob(newEnemy) end
+        end
+    end
+end)
