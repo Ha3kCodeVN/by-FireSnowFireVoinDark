@@ -1,0 +1,27 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Workspace = game:GetService("Workspace")
+
+local function isBusoOn()
+	local charactersFolder = Workspace:FindFirstChild("Characters")
+	if charactersFolder then
+		local myChar = charactersFolder:FindFirstChild(LocalPlayer.Name)
+		if myChar and myChar:FindFirstChild("HasBuso", false) then
+			return true
+		end
+	end
+	return false
+end
+
+task.spawn(function()
+	while true do
+		if not isBusoOn() then
+			local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
+			local commF = remotes and remotes:FindFirstChild("CommF_")
+			if commF then
+				commF:InvokeServer("Buso")
+			end
+		end
+		task.wait(1)
+	end
+end)
