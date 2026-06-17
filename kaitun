@@ -23,6 +23,10 @@ if SeaW == "Sea1" or SeaW == "Sea2" or SeaW == "Sea3" then
     end)
 end
 
+pcall(function()
+    game.Players.LocalPlayer:WaitForChild("PlayerScripts"):FindFirstChild("AnimateEntrance").Disabled = true
+end)
+
 local function getMyCharacter()
     local charactersFolder = Workspace:FindFirstChild("Characters")
     if charactersFolder then
