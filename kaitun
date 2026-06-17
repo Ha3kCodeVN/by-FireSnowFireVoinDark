@@ -5,7 +5,7 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
 local configTeam = getgenv().Config and getgenv().Config["Join-to-Team"]
-local targetTeam = (configTeam == "Marines") and "Pirates" or "Marines"
+local targetTeam = (configTeam == "Pirates") and "Pirates" or "Marines"
 
 local currentTeam = LocalPlayer.Team and LocalPlayer.Team.Name or ""
 
