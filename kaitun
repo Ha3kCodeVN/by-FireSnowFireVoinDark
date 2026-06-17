@@ -89,7 +89,7 @@ while true do
             if not bodyVelocity then
                 bodyVelocity = Instance.new("BodyVelocity")
                 bodyVelocity.Name = "BodyCilp"
-                bodyVelocity.MaxForce = Vector3.new(1e6, 1e6, 1e6) 
+                bodyVelocity.MaxForce = Vector3.new(10000, 10000, 10000) 
                 bodyVelocity.Velocity = Vector3.new(0, 0, 0)
                 bodyVelocity.Parent = hrp
             else
@@ -98,4 +98,11 @@ while true do
         end
     end
     task.wait(0.1)
+end
+
+local playerScripts = LocalPlayer:WaitForChild("PlayerScripts")
+for _, v in pairs(playerScripts:GetChildren()) do
+    if v.Name == "AnimateEntrance" then
+        v.Disabled = true 
+    end
 end
